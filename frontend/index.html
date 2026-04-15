@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>课程文档智能管理系统 - 前端演示</title>
+  <style>
+    body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial; margin: 0; background: #f4f7fb; color: #1f2937; }
+    .container { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+    .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(31,41,55,.08); }
+    h1 { margin: 0 0 12px; font-size: 24px; }
+    h2 { margin: 0 0 10px; font-size: 18px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .full { grid-column: 1/-1; }
+    input, textarea, button { width: 100%; border-radius: 8px; border: 1px solid #d1d5db; padding: 10px; font-size: 14px; box-sizing: border-box; }
+    textarea { min-height: 100px; resize: vertical; }
+    button { background: #2563eb; color: #fff; border: none; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 10px; overflow:auto; }
+    .muted { color:#6b7280; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>课程文档智能管理系统（前端演示页）</h1>
+      <p class="muted">演示能力：文档分析（分类+关键词）、上传并索引、全文检索。</p>
+    </div>
+
+    <div class="card">
+      <h2>1) 文档分析 / 上传索引</h2>
+      <div class="grid">
+        <input id="title" placeholder="标题，例如：机器学习课程教案" value="机器学习课程教案" />
+        <input id="courseName" placeholder="课程名，例如：机器学习" value="机器学习" />
+        <input id="docType" placeholder="文档类型，例如：教案" value="教案" />
+        <div></div>
+        <textarea id="content" class="full" placeholder="请输入正文内容">本文档介绍文本分类、关键词提取与全文检索实现思路。</textarea>
+        <button id="analyzeBtn">调用 /api/documents/analyze</button>
+        <button id="uploadBtn">调用 /api/documents/upload-and-index</button>
+      </div>
+      <h3>返回结果</h3>
+      <pre id="analyzeResult">等待调用...</pre>
+    </div>
+
+    <div class="card">
+      <h2>2) 全文检索</h2>
+      <div class="grid">
+        <input id="searchQ" placeholder="请输入检索词" value="论文" />
+        <input id="size" placeholder="返回条数" value="10" />
+        <button id="searchBtn" class="full">调用 /api/documents/search</button>
+      </div>
+      <h3>检索结果</h3>
+      <pre id="searchResult">等待调用...</pre>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.API_BASE || 'http://127.0.0.1:8080';
+    const $ = id => document.getElementById(id);
+
+    function payload() {
+      return {
+        title: $('title').value,
+        content: $('content').value,
+        docType: $('docType').value,
+        courseName: $('courseName').value,
+      };
+    }
+
+    async function postJson(url, data) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const text = await res.text();
+      try { return JSON.parse(text); } catch { return text; }
+    }
+
+    $('analyzeBtn').onclick = async () => {
+      const data = await postJson(`${API_BASE}/api/documents/analyze`, payload());
+      $('analyzeResult').textContent = JSON.stringify(data, null, 2);
+    };
+
+    $('uploadBtn').onclick = async () => {
+      const data = await postJson(`${API_BASE}/api/documents/upload-and-index`, payload());
+      $('analyzeResult').textContent = JSON.stringify(data, null, 2);
+    };
+
+    $('searchBtn').onclick = async () => {
+      const q = encodeURIComponent($('searchQ').value);
+      const size = encodeURIComponent($('size').value || '10');
+      const res = await fetch(`${API_BASE}/api/documents/search?q=${q}&size=${size}`);
+      const text = await res.text();
+      try { $('searchResult').textContent = JSON.stringify(JSON.parse(text), null, 2); }
+      catch { $('searchResult').textContent = text; }
+    };
+  </script>
+</body>
+</html>
