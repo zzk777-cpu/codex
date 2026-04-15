@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: course_doc
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.1
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  nlp-service:
+    build:
+      context: ./python-nlp
+    ports:
+      - "8000:8000"
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SERVICES_NLP_BASE_URL: http://nlp-service:8000
+      SERVICES_ES_BASE_URL: http://elasticsearch:9200
+      SERVICES_ES_INDEX: course_documents
+    depends_on:
+      - elasticsearch
+      - nlp-service
+      - mysql
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql_data:
+  es_data:

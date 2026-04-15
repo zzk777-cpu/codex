@@ -1,0 +1,4 @@
+backend/out/
+python-nlp/app/__pycache__/
+*.pyc
+*.bundle
